@@ -44,21 +44,21 @@ export default function Camera({ onCapture, onClose }: CameraProps) {
     });
     
     if (imageSrc) {
+      setCaptureCount(prev => prev + 1);
       setIsCapturing(true);
       setShowSuccess(true);
-      setCaptureCount(prev => prev + 1);
       
-      // Feedback visual
+      // Capturar y guardar INMEDIATAMENTE (sin delays)
+      onCapture(imageSrc);
+      
+      // Feedback visual rápido
       setTimeout(() => {
         setIsCapturing(false);
-      }, 200);
+      }, 150);
       
       setTimeout(() => {
         setShowSuccess(false);
-      }, 800);
-      
-      // Capturar y guardar inmediatamente
-      onCapture(imageSrc);
+      }, 600);
     }
   }, [onCapture]);
 

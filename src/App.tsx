@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Camera as CameraIcon, Loader, CheckCircle } from 'lucide-react';
 import Camera from './components/Camera';
 import PhotoFeed from './components/PhotoFeed';
@@ -11,7 +11,8 @@ function App() {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingPhotos, setIsLoadingPhotos] = useState(true);
   const [showSaveSuccess, setShowSaveSuccess] = useState(false);
-  const [savingQueue, setSavingQueue] = useState<string[]>([]);
+  const feedContainerRef = useRef<HTMLDivElement>(null);
+  const previousPhotosCountRef = useRef(0);
 
   // Cargar fotos al iniciar
   useEffect(() => {
@@ -28,6 +29,22 @@ function App() {
     };
     loadPhotos();
   }, []);
+
+  // Scroll automático al top cuando se agrega una nueva foto
+  useEffect(() => {
+    if (photos.length > previousPhotosCountRef.current && previousPhotosCountRef.current > 0) {
+      // Nueva foto agregada - hacer scroll al top
+      setTimeout(() => {
+        if (feedContainerRef.current) {
+          feedContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          // Fallback: scroll del window
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }, 100);
+    }
+    previousPhotosCountRef.current = photos.length;
+  }, [photos.length]);
 
   // Recargar fotos periódicamente para ver nuevas fotos de otros usuarios
   useEffect(() => {
@@ -48,25 +65,44 @@ function App() {
     return () => clearInterval(interval);
   }, [isSaving, showCamera, photos.length]);
 
-  // Guardar foto inmediatamente sin modal
+  // Guardar foto inmediatamente - actualización optimista
   const handleCapture = useCallback(async (imageSrc: string) => {
-    setIsSaving(true);
-    setSavingQueue((prev) => [...prev, imageSrc]);
+    // Crear foto temporal inmediatamente (optimistic update)
+    const tempId = `temp-${Date.now()}-${Math.random()}`;
+    const tempPhoto: Photo = {
+      id: tempId,
+      imageUrl: imageSrc,
+      title: undefined,
+      createdAt: new Date(),
+    };
 
-    try {
-      const savedPhoto = await savePhoto(imageSrc);
-      if (savedPhoto) {
-        // Agregar al inicio con animación
-        setPhotos((prev) => [savedPhoto, ...prev]);
-        setShowSaveSuccess(true);
+    // Agregar al feed INSTANTÁNEAMENTE
+    setPhotos((prev) => [tempPhoto, ...prev]);
+    setShowSaveSuccess(true);
+    setIsSaving(true);
+
+    // Guardar en Supabase en segundo plano (sin bloquear)
+    savePhoto(imageSrc)
+      .then((savedPhoto) => {
+        if (savedPhoto) {
+          // Reemplazar la foto temporal con la real
+          setPhotos((prev) =>
+            prev.map((photo) => (photo.id === tempId ? savedPhoto : photo))
+          );
+        } else {
+          // Si falla, mantener la temporal pero marcar error
+          console.warn('No se pudo guardar la foto en el servidor');
+        }
+      })
+      .catch((error) => {
+        console.error('Error saving photo:', error);
+        // Opcional: remover la foto temporal si falla
+        // setPhotos((prev) => prev.filter((photo) => photo.id !== tempId));
+      })
+      .finally(() => {
+        setIsSaving(false);
         setTimeout(() => setShowSaveSuccess(false), 2000);
-      }
-    } catch (error) {
-      console.error('Error saving photo:', error);
-    } finally {
-      setIsSaving(false);
-      setSavingQueue((prev) => prev.slice(1));
-    }
+      });
   }, []);
 
   const handleDelete = useCallback(async (id: string) => {
@@ -115,7 +151,7 @@ function App() {
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <main ref={feedContainerRef} className="flex-1 flex flex-col overflow-hidden">
         <PhotoFeed photos={photos} onDelete={handleDelete} />
       </main>
 
