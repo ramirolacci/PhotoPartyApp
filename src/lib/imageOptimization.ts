@@ -3,71 +3,85 @@ const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
 export async function compressImage(
   blob: Blob,
-  maxWidth: number = isMobile ? 2048 : 2560,
-  maxHeight: number = isMobile ? 2048 : 2560,
-  quality: number = isMobile ? 0.85 : 0.9
+  maxWidth: number = isMobile ? 1280 : 1920,
+  maxHeight: number = isMobile ? 1280 : 1920,
+  quality: number = isMobile ? 0.75 : 0.85
 ): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onerror = reject;
+    reader.onerror = (error) => {
+      console.error('FileReader error:', error);
+      reject(error);
+    };
     reader.readAsDataURL(blob);
     reader.onload = (event) => {
       const img = new Image();
-      img.onerror = reject;
+      img.onerror = (error) => {
+        console.error('Image load error:', error);
+        console.error('Image src length:', (event.target?.result as string)?.length);
+        // En caso de error, devolver el blob original
+        resolve(blob);
+      };
       img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
+        try {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
 
-        // Mantener aspect ratio y redimensionar si es necesario
-        const aspectRatio = width / height;
-        
-        if (width > height) {
-          if (width > maxWidth) {
-            width = maxWidth;
-            height = width / aspectRatio;
+          // Mantener aspect ratio y redimensionar si es necesario
+          const aspectRatio = width / height;
+
+          if (width > height) {
+            if (width > maxWidth) {
+              width = maxWidth;
+              height = width / aspectRatio;
+            }
+          } else {
+            if (height > maxHeight) {
+              height = maxHeight;
+              width = height * aspectRatio;
+            }
           }
-        } else {
-          if (height > maxHeight) {
-            height = maxHeight;
-            width = height * aspectRatio;
+
+          // Asegurar dimensiones válidas
+          width = Math.round(width);
+          height = Math.round(height);
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d', {
+            willReadFrequently: false,
+            alpha: false
+          });
+
+          if (!ctx) {
+            console.warn('Could not get canvas context, returning original blob');
+            resolve(blob);
+            return;
           }
-        }
 
-        // Asegurar dimensiones válidas
-        width = Math.round(width);
-        height = Math.round(height);
+          // Mejorar calidad de renderizado
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, 0, 0, width, height);
 
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d', { 
-          willReadFrequently: false,
-          alpha: false 
-        });
-        
-        if (!ctx) {
+          // Limpiar referencia de imagen para liberar memoria
+          img.src = '';
+
+          canvas.toBlob(
+            (compressedBlob) => {
+              // Limpiar canvas
+              canvas.width = 0;
+              canvas.height = 0;
+              resolve(compressedBlob || blob);
+            },
+            'image/jpeg',
+            quality
+          );
+        } catch (error) {
+          console.error('Error during image compression:', error);
           resolve(blob);
-          return;
         }
-
-        // Mejorar calidad de renderizado
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(img, 0, 0, width, height);
-
-        // Limpiar referencia de imagen para liberar memoria
-        img.src = '';
-
-        canvas.toBlob(
-          (compressedBlob) => {
-            // Limpiar canvas
-            canvas.width = 0;
-            canvas.height = 0;
-            resolve(compressedBlob || blob);
-          },
-          'image/jpeg',
-          quality
-        );
       };
       img.src = event.target?.result as string;
     };

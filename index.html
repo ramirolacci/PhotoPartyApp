@@ -1,20 +1,41 @@
 <!doctype html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
-    <meta name="apple-mobile-web-app-capable" content="true" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Galería de Fotos" />
-    <meta name="theme-color" content="#111827" />
-    <title>Galería de Fotos</title>
-    <meta name="description" content="Captura y gestiona tus fotos en tiempo real" />
-    <meta property="og:image" content="https://bolt.new/static/og_default.png">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:image" content="https://bolt.new/static/og_default.png">
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/favicon.png" />
+
+  <!-- PWA Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="PhotoParty" />
+  <meta name="theme-color" content="#0a0a0a" />
+
+  <!-- SEO -->
+  <title>PhotoParty - Captura y Comparte Momentos</title>
+  <meta name="description"
+    content="Captura, guarda y comparte tus mejores momentos con PhotoParty. Una galería de fotos moderna y elegante." />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="PhotoParty - Captura y Comparte Momentos" />
+  <meta property="og:description" content="Captura, guarda y comparte tus mejores momentos con PhotoParty" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="/favicon.png" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="PhotoParty" />
+  <meta name="twitter:description" content="Captura y comparte tus mejores momentos" />
+  <meta name="twitter:image" content="/favicon.png" />
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>

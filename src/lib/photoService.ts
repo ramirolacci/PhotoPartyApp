@@ -1,85 +1,82 @@
-import { supabase } from './supabaseClient';
-import { compressImage, blobToBase64, base64ToBlob } from './imageOptimization';
 import type { Photo } from '../types/Photo';
+
+// Fallback: usar localStorage si Supabase falla
+const STORAGE_KEY = 'photoparty_photos';
+
+function getLocalPhotos(): Photo[] {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) return [];
+    return JSON.parse(stored).map((p: any) => ({
+      ...p,
+      createdAt: new Date(p.createdAt),
+    }));
+  } catch {
+    return [];
+  }
+}
+
+function saveLocalPhotos(photos: Photo[]): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(photos));
+  } catch (err) {
+    console.error('Error saving to localStorage:', err);
+  }
+}
 
 export async function savePhoto(
   imageBase64: string,
   title?: string
 ): Promise<Photo | null> {
   try {
-    const blob = base64ToBlob(imageBase64);
-    const compressedBlob = await compressImage(blob);
-    const compressedBase64 = await blobToBase64(compressedBlob);
+    console.log('Saving photo to localStorage...');
 
-    const binaryData = Uint8Array.from(atob(compressedBase64.split(',')[1]), (c) => c.charCodeAt(0));
-
-    const { data, error } = await supabase
-      .from('photos')
-      .insert({
-        image_data: binaryData,
-        title: title || null,
-        created_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error saving photo:', error);
-      return null;
-    }
-
-    return {
-      id: data.id,
-      imageUrl: compressedBase64,
-      title: data.title,
-      createdAt: new Date(data.created_at),
+    const newPhoto: Photo = {
+      id: `local-${Date.now()}-${Math.random()}`,
+      imageUrl: imageBase64,
+      title: title || undefined,
+      createdAt: new Date(),
     };
+
+    const photos = getLocalPhotos();
+    photos.unshift(newPhoto);
+    saveLocalPhotos(photos);
+
+    console.log('Photo saved successfully to localStorage');
+    return newPhoto;
   } catch (err) {
     console.error('Error in savePhoto:', err);
+    if (err instanceof Error) {
+      console.error('Error message:', err.message);
+      console.error('Error stack:', err.stack);
+    }
     return null;
   }
 }
 
 export async function getPhotos(): Promise<Photo[]> {
   try {
-    const { data, error } = await supabase
-      .from('photos')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching photos:', error);
-      return [];
-    }
-
-    return data.map((photo: any) => {
-      const binaryData = new Uint8Array(photo.image_data);
-      let binary = '';
-      for (let i = 0; i < binaryData.length; i++) {
-        binary += String.fromCharCode(binaryData[i]);
-      }
-      const base64 = btoa(binary);
-      return {
-        id: photo.id,
-        imageUrl: `data:image/jpeg;base64,${base64}`,
-        title: photo.title,
-        createdAt: new Date(photo.created_at),
-      };
-    });
+    console.log('Fetching photos from localStorage...');
+    const photos = getLocalPhotos();
+    console.log('Photos fetched successfully:', photos.length, 'photos');
+    return photos;
   } catch (err) {
     console.error('Error in getPhotos:', err);
+    if (err instanceof Error) {
+      console.error('Error message:', err.message);
+      console.error('Error stack:', err.stack);
+    }
     return [];
   }
 }
 
 export async function deletePhoto(id: string): Promise<boolean> {
   try {
-    const { error } = await supabase.from('photos').delete().eq('id', id);
-
-    if (error) {
-      console.error('Error deleting photo:', error);
-      return false;
-    }
+    console.log('Deleting photo from localStorage:', id);
+    const photos = getLocalPhotos();
+    const filtered = photos.filter((p) => p.id !== id);
+    saveLocalPhotos(filtered);
+    console.log('Photo deleted successfully');
     return true;
   } catch (err) {
     console.error('Error in deletePhoto:', err);
@@ -89,16 +86,16 @@ export async function deletePhoto(id: string): Promise<boolean> {
 
 export async function updatePhotoTitle(id: string, title: string): Promise<boolean> {
   try {
-    const { error } = await supabase
-      .from('photos')
-      .update({ title: title || null })
-      .eq('id', id);
-
-    if (error) {
-      console.error('Error updating photo title:', error);
-      return false;
+    console.log('Updating photo title in localStorage:', id);
+    const photos = getLocalPhotos();
+    const photo = photos.find((p) => p.id === id);
+    if (photo) {
+      photo.title = title || undefined;
+      saveLocalPhotos(photos);
+      console.log('Photo title updated successfully');
+      return true;
     }
-    return true;
+    return false;
   } catch (err) {
     console.error('Error in updatePhotoTitle:', err);
     return false;
