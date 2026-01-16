@@ -31,7 +31,7 @@ export default function Login({ onLogin }: LoginProps) {
             {/* Background 3D */}
             <SmokeBackground />
 
-            <div className="max-w-md w-full glass-effect p-8 rounded-2xl relative z-10 animate-in zoom-in">
+            <div className="max-w-md w-full glass-effect bg-black/60 backdrop-blur-xl p-8 rounded-2xl relative z-10 animate-in zoom-in border border-white/10">
                 <div className="text-center mb-8">
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 mb-4 shadow-lg float">
                         <Sparkles className="text-white" size={32} />
