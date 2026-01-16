@@ -34,10 +34,7 @@ export default function Camera({ onCapture, onClose }: CameraProps) {
   };
 
   const capture = useCallback(() => {
-    const imageSrc = webcamRef.current?.getScreenshot({
-      width: 1920,
-      height: 1920,
-    });
+    const imageSrc = webcamRef.current?.getScreenshot();
 
     if (imageSrc) {
       setCaptureCount(prev => prev + 1);
