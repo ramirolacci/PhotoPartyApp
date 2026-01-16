@@ -166,7 +166,7 @@ function App() {
       </main>
 
       {/* Footer */}
-      <footer className="py-4 text-center text-[10px] text-gray-500/50">
+      <footer className="py-4 text-center text-[10px] text-white/40">
         <p>
           © Desarrollado por{' '}
           <a

@@ -82,7 +82,7 @@ export default function Login({ onLogin }: LoginProps) {
 
             </div>
 
-            <footer className="absolute bottom-4 left-0 right-0 text-center text-[10px] text-gray-500/50">
+            <footer className="absolute bottom-4 left-0 right-0 text-center text-[10px] text-white/40">
                 <p>
                     © Desarrollado por{' '}
                     <a
