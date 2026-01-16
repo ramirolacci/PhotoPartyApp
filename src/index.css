@@ -13,6 +13,10 @@
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
   }
 
   body {
@@ -42,7 +46,7 @@
     html {
       font-size: 16px;
     }
-    
+
     body {
       -webkit-overflow-scrolling: touch;
     }
@@ -123,6 +127,7 @@
     from {
       opacity: 0;
     }
+
     to {
       opacity: 1;
     }
@@ -133,6 +138,7 @@
       transform: translateY(30px);
       opacity: 0;
     }
+
     to {
       transform: translateY(0);
       opacity: 1;
@@ -144,6 +150,7 @@
       transform: translateY(-30px);
       opacity: 0;
     }
+
     to {
       transform: translateY(0);
       opacity: 1;
@@ -155,6 +162,7 @@
       transform: scale(0.9);
       opacity: 0;
     }
+
     to {
       transform: scale(1);
       opacity: 1;
@@ -165,15 +173,19 @@
     0% {
       background-position: -1000px 0;
     }
+
     100% {
       background-position: 1000px 0;
     }
   }
 
   @keyframes float {
-    0%, 100% {
+
+    0%,
+    100% {
       transform: translateY(0px);
     }
+
     50% {
       transform: translateY(-10px);
     }
@@ -210,20 +222,18 @@
   }
 
   /* Scrollbar personalizado */
+  /* Scrollbar oculto pero funcional */
   ::-webkit-scrollbar {
-    width: 8px;
+    width: 0px;
+    background: transparent;
+    display: none;
   }
 
   ::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.2);
+    background: transparent;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 4px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, #764ba2 0%, #f093fb 100%);
+    background: transparent;
   }
 }
