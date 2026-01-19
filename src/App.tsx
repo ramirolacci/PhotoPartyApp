@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Camera as CameraIcon, Loader, CheckCircle, Sparkles } from 'lucide-react';
+import { Camera as CameraIcon, Loader, CheckCircle, Sparkles, MoreVertical, Package, Loader2 } from 'lucide-react';
+import JSZip from 'jszip';
 import Camera from './components/Camera';
 import PhotoFeed from './components/PhotoFeed';
 import Login from './components/Login';
@@ -11,11 +12,25 @@ function App() {
   const [user, setUser] = useState<string | null>(null);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [showCamera, setShowCamera] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingPhotos, setIsLoadingPhotos] = useState(true);
   const [showSaveSuccess, setShowSaveSuccess] = useState(false);
   const feedContainerRef = useRef<HTMLDivElement>(null);
   const previousPhotosCountRef = useRef(0);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Cerrar menú al hacer click afuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Verificar sesión
   useEffect(() => {
@@ -180,6 +195,45 @@ function App() {
     }
   }, []);
 
+  const exportAllPhotos = async () => {
+    if (photos.length === 0) return;
+
+    setIsExporting(true);
+    setShowMenu(false);
+    try {
+      const zip = new JSZip();
+      const folder = zip.folder("photoparty-photos");
+
+      const photoPromises = photos.map(async (photo, index) => {
+        try {
+          const response = await fetch(photo.imageUrl);
+          const blob = await response.blob();
+          const fileName = `photo-${photo.id || index}-${photo.createdAt.getTime()}.jpg`;
+          folder?.file(fileName, blob);
+        } catch (err) {
+          console.error(`Error adding photo ${photo.id} to zip:`, err);
+        }
+      });
+
+      await Promise.all(photoPromises);
+      const content = await zip.generateAsync({ type: "blob" });
+
+      const url = window.URL.createObjectURL(content);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `photoparty-export-${Date.now()}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error exporting photos:', err);
+      alert('Error al exportar las fotos. Por favor, intenta de nuevo.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const handleLogin = (name: string) => {
     localStorage.setItem('photoPartyUser', name);
     setUser(name);
@@ -232,9 +286,37 @@ function App() {
                 <span className="hidden sm:inline">Guardando...</span>
               </div>
             )}
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setShowMenu(!showMenu)}
+                disabled={isExporting}
+                className={`p-2.5 rounded-full transition-all duration-200 ${showMenu ? 'bg-white/20 text-white' : 'text-gray-400 hover:text-white hover:bg-white/10'
+                  } disabled:opacity-50`}
+                aria-label="Más opciones"
+              >
+                {isExporting ? <Loader2 size={20} className="animate-spin text-purple-400" /> : <MoreVertical size={20} />}
+              </button>
+
+              {/* Menú Desplegable */}
+              {showMenu && (
+                <div className="absolute right-0 mt-2 w-48 glass-effect-dark rounded-xl border border-white/10 shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
+                  <div className="py-1">
+                    <button
+                      onClick={exportAllPhotos}
+                      className="w-full px-4 py-3 flex items-center gap-3 text-sm font-medium text-gray-200 hover:bg-white/10 hover:text-white transition-colors"
+                    >
+                      <Package size={18} />
+                      Exportar Todas
+                    </button>
+                    {/* Futuras opciones pueden ir aquí */}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button
               onClick={() => setShowCamera(true)}
-              disabled={isSaving}
+              disabled={isSaving || isExporting}
               className="btn-primary text-white px-5 md:px-6 py-2.5 rounded-full flex items-center gap-2 font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <CameraIcon size={20} />
