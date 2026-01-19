@@ -1,28 +1,8 @@
+import { supabase } from './supabaseClient';
 import type { Photo } from '../types/Photo';
+import { base64ToBlob } from './imageOptimization';
 
-// Fallback: usar localStorage si Supabase falla
-const STORAGE_KEY = 'photoparty_photos';
 
-function getLocalPhotos(): Photo[] {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) return [];
-    return JSON.parse(stored).map((p: any) => ({
-      ...p,
-      createdAt: new Date(p.createdAt),
-    }));
-  } catch {
-    return [];
-  }
-}
-
-function saveLocalPhotos(photos: Photo[]): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(photos));
-  } catch (err) {
-    console.error('Error saving to localStorage:', err);
-  }
-}
 
 export async function savePhoto(
   imageBase64: string,
@@ -30,55 +10,130 @@ export async function savePhoto(
   title?: string
 ): Promise<Photo | null> {
   try {
-    console.log('Saving photo to localStorage...');
+    // 1. Convert base64 to blob
+    const blob = base64ToBlob(imageBase64);
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
 
-    const newPhoto: Photo = {
-      id: `local-${Date.now()}-${Math.random()}`,
-      imageUrl: imageBase64,
-      userName: userName,
-      title: title || undefined,
-      createdAt: new Date(),
+    // 2. Upload to Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('photos')
+      .upload(fileName, blob, {
+        contentType: 'image/jpeg',
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (uploadError) {
+      console.error('Error uploading photo:', uploadError);
+      // Si el bucket no existe o falla config, no seguimos
+      throw uploadError;
+    }
+
+    // 3. Get Public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('photos')
+      .getPublicUrl(fileName);
+
+    // 4. Save metadata to Database
+    const { data: insertedPhoto, error: insertError } = await supabase
+      .from('photos')
+      .insert({
+        image_url: publicUrl,
+        user_name: userName,
+        title: title || null,
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error('Error saving photo metadata:', insertError);
+      // Optional: Cleanup uploaded file if metadata save fails
+      // await supabase.storage.from('photos').remove([fileName]); 
+      throw insertError;
+    }
+
+    // 5. Return mapped object
+    return {
+      id: insertedPhoto.id,
+      imageUrl: insertedPhoto.image_url,
+      userName: insertedPhoto.user_name,
+      title: insertedPhoto.title || undefined,
+      createdAt: new Date(insertedPhoto.created_at),
     };
 
-    const photos = getLocalPhotos();
-    photos.unshift(newPhoto);
-    saveLocalPhotos(photos);
-
-    console.log('Photo saved successfully to localStorage');
-    return newPhoto;
   } catch (err) {
     console.error('Error in savePhoto:', err);
-    if (err instanceof Error) {
-      console.error('Error message:', err.message);
-      console.error('Error stack:', err.stack);
-    }
+    // Mantenemos el alert silencioso en producción, o lo dejamos para feedback crítico
+    // alert(`Error detallado al guardar: ${err instanceof Error ? err.message : JSON.stringify(err)}`);
     return null;
   }
 }
 
 export async function getPhotos(): Promise<Photo[]> {
   try {
-    console.log('Fetching photos from localStorage...');
-    const photos = getLocalPhotos();
-    console.log('Photos fetched successfully:', photos.length, 'photos');
-    return photos;
+    const { data, error } = await supabase
+      .from('photos')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching photos:', error);
+      throw error;
+    }
+
+    return data.map((p) => ({
+      id: p.id,
+      imageUrl: p.image_url,
+      userName: p.user_name,
+      title: p.title || undefined,
+      createdAt: new Date(p.created_at),
+    }));
   } catch (err) {
     console.error('Error in getPhotos:', err);
-    if (err instanceof Error) {
-      console.error('Error message:', err.message);
-      console.error('Error stack:', err.stack);
-    }
     return [];
   }
 }
 
 export async function deletePhoto(id: string): Promise<boolean> {
   try {
-    console.log('Deleting photo from localStorage:', id);
-    const photos = getLocalPhotos();
-    const filtered = photos.filter((p) => p.id !== id);
-    saveLocalPhotos(filtered);
-    console.log('Photo deleted successfully');
+    // 1. Get the photo URL to extract filename
+    const { data: photo, error: fetchError } = await supabase
+      .from('photos')
+      .select('image_url')
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !photo) {
+      console.error('Photo not found for deletion:', id);
+      return false;
+    }
+
+    // Extract filename from URL
+    const parts = photo.image_url.split('/');
+    const fileName = parts[parts.length - 1];
+
+    if (fileName) {
+      // 2. Delete from Storage
+      const { error: storageError } = await supabase.storage
+        .from('photos')
+        .remove([fileName]);
+
+      if (storageError) {
+        console.warn('Could not delete file from storage:', storageError);
+      }
+    }
+
+    // 3. Delete from Database
+    const { error: dbError } = await supabase
+      .from('photos')
+      .delete()
+      .eq('id', id);
+
+    if (dbError) {
+      console.error('Error deleting photo from DB:', dbError);
+      return false;
+    }
+
     return true;
   } catch (err) {
     console.error('Error in deletePhoto:', err);
@@ -88,16 +143,16 @@ export async function deletePhoto(id: string): Promise<boolean> {
 
 export async function updatePhotoTitle(id: string, title: string): Promise<boolean> {
   try {
-    console.log('Updating photo title in localStorage:', id);
-    const photos = getLocalPhotos();
-    const photo = photos.find((p) => p.id === id);
-    if (photo) {
-      photo.title = title || undefined;
-      saveLocalPhotos(photos);
-      console.log('Photo title updated successfully');
-      return true;
+    const { error } = await supabase
+      .from('photos')
+      .update({ title: title || null })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error updating title:', error);
+      return false;
     }
-    return false;
+    return true;
   } catch (err) {
     console.error('Error in updatePhotoTitle:', err);
     return false;

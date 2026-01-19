@@ -4,6 +4,7 @@ import Camera from './components/Camera';
 import PhotoFeed from './components/PhotoFeed';
 import Login from './components/Login';
 import { savePhoto, getPhotos, deletePhoto } from './lib/photoService';
+import { supabase } from './lib/supabaseClient';
 import type { Photo } from './types/Photo';
 
 function App() {
@@ -40,6 +41,40 @@ function App() {
       }
     };
     loadPhotos();
+
+    // Suscripción a cambios en tiempo real
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'photos',
+        },
+        (payload: any) => {
+          const newPhoto = payload.new;
+
+          // Evitar duplicados si el usuario actual fue quien subió la foto
+          // (ya se manejó con la actualización optimista)
+          if (newPhoto.user_name === user) return;
+
+          const photoToAdd: Photo = {
+            id: newPhoto.id,
+            imageUrl: newPhoto.image_url,
+            userName: newPhoto.user_name,
+            title: newPhoto.title || undefined,
+            createdAt: new Date(newPhoto.created_at),
+          };
+
+          setPhotos((prev) => [photoToAdd, ...prev]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   // Scroll automático al top cuando se agrega una nueva foto
@@ -58,7 +93,22 @@ function App() {
 
   // Guardar foto inmediatamente - actualización optimista
   const handleCapture = useCallback(async (imageSrc: string) => {
-    if (!user) return;
+    // Log manual
+    const consoleEl = document.getElementById('debug-console');
+    if (consoleEl) {
+      const div = document.createElement('div');
+      div.innerText = `[App] handleCapture triggered`;
+      consoleEl.appendChild(div);
+    }
+
+    if (!user) {
+      if (consoleEl) {
+        const div = document.createElement('div');
+        div.innerText = `[App] No user found!`;
+        consoleEl.appendChild(div);
+      }
+      return;
+    }
 
     const tempId = `temp-${Date.now()}-${Math.random()}`;
     const tempPhoto: Photo = {
@@ -72,6 +122,12 @@ function App() {
     setPhotos((prev) => [tempPhoto, ...prev]);
     setShowSaveSuccess(true);
     setIsSaving(true);
+
+    if (consoleEl) {
+      const div = document.createElement('div');
+      div.innerText = `[App] Calling savePhoto...`;
+      consoleEl.appendChild(div);
+    }
 
     savePhoto(imageSrc, user)
       .then((savedPhoto) => {
@@ -193,6 +249,8 @@ function App() {
           </div>
         </div>
       )}
+
+
 
       {/* Cámara */}
       {showCamera && (
