@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Trash2, Download, Share2, Image as ImageIcon, Package, Heart } from 'lucide-react';
+import { Trash2, Download, Share2, Image as ImageIcon, Package, Heart, Loader2 } from 'lucide-react';
 import type { Photo } from '../types/Photo';
 import { toggleLike as toggleLikeService } from '../lib/photoService';
+import JSZip from 'jszip';
 
 interface PhotoFeedProps {
   photos: Photo[];
@@ -135,18 +136,39 @@ export default function PhotoFeed({ photos, onDelete, onUpdatePhoto, currentUser
 
     setIsExporting(true);
     try {
-      if (photos.length === 1) {
-        downloadPhoto(photos[0]);
-        setIsExporting(false);
-        return;
-      }
+      const zip = new JSZip();
+      const folder = zip.folder("photoparty-photos");
 
-      for (let i = 0; i < photos.length; i++) {
-        await new Promise((resolve) => setTimeout(resolve, 300));
-        downloadPhoto(photos[i]);
-      }
+      // Descargar todas las fotos y añadirlas al ZIP
+      const photoPromises = photos.map(async (photo, index) => {
+        try {
+          const response = await fetch(photo.imageUrl);
+          const blob = await response.blob();
+          const fileName = `photo-${photo.id || index}-${photo.createdAt.getTime()}.jpg`;
+          folder?.file(fileName, blob);
+        } catch (err) {
+          console.error(`Error adding photo ${photo.id} to zip:`, err);
+        }
+      });
+
+      await Promise.all(photoPromises);
+
+      // Generar el ZIP
+      const content = await zip.generateAsync({ type: "blob" });
+
+      // Descargar el ZIP
+      const url = window.URL.createObjectURL(content);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `photoparty-export-${Date.now()}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
     } catch (err) {
       console.error('Error exporting photos:', err);
+      alert('Error al exportar las fotos. Por favor, intenta de nuevo.');
     } finally {
       setIsExporting(false);
     }
@@ -181,10 +203,19 @@ export default function PhotoFeed({ photos, onDelete, onUpdatePhoto, currentUser
             <button
               onClick={exportAllPhotos}
               disabled={isExporting}
-              className="flex-1 btn-secondary text-white px-4 py-3 rounded-xl hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2 font-semibold text-sm disabled:opacity-50"
+              className="flex-1 btn-secondary text-white px-4 py-3 rounded-xl hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2 font-semibold text-sm disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              <Package size={18} />
-              <span>Exportar Todas</span>
+              {isExporting ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" />
+                  <span>Preparando ZIP...</span>
+                </>
+              ) : (
+                <>
+                  <Package size={18} />
+                  <span>Exportar Todas (ZIP)</span>
+                </>
+              )}
             </button>
           </div>
         )}
