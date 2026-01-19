@@ -313,15 +313,6 @@ function App() {
                 </div>
               )}
             </div>
-
-            <button
-              onClick={() => setShowCamera(true)}
-              disabled={isSaving || isExporting}
-              className="btn-primary text-white px-5 md:px-6 py-2.5 rounded-full flex items-center gap-2 font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <CameraIcon size={20} />
-              <span className="hidden sm:inline">Capturar</span>
-            </button>
           </div>
         </div>
       </header>
@@ -368,6 +359,19 @@ function App() {
       <div id="debug-console" className="hidden fixed top-20 left-0 right-0 bg-black/80 text-green-400 p-2 font-mono text-[10px] z-[100] h-32 overflow-auto border-b-2 border-red-500 pointer-events-none opacity-80">
         <div className="border-b border-gray-700 mb-1 pb-1 font-bold text-yellow-500">DEBUG LOGS (Visible at top)</div>
       </div>
+
+      {/* Botón flotante de cámara */}
+      {!showCamera && (
+        <button
+          onClick={() => setShowCamera(true)}
+          disabled={isSaving || isExporting}
+          className="fixed bottom-12 right-6 z-40 btn-primary p-4 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed group"
+          aria-label="Capturar foto"
+        >
+          <CameraIcon size={28} className="group-hover:rotate-12 transition-transform" />
+          <div className="absolute inset-0 rounded-full blur-xl bg-purple-500/40 -z-10 group-hover:bg-purple-500/60 transition-all" />
+        </button>
+      )}
 
       {/* Cámara */}
       {showCamera && (
