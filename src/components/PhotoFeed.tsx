@@ -7,6 +7,7 @@ interface PhotoFeedProps {
   photos: Photo[];
   onDelete: (id: string) => void;
   onUpdatePhoto?: (updatedPhoto: Photo) => void;
+  currentUser: string;
 }
 
 const PlaceholderImage = () => (
@@ -18,7 +19,7 @@ const PlaceholderImage = () => (
   </div>
 );
 
-export default function PhotoFeed({ photos, onDelete, onUpdatePhoto }: PhotoFeedProps) {
+export default function PhotoFeed({ photos, onDelete, onUpdatePhoto, currentUser }: PhotoFeedProps) {
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
   const [isExporting, setIsExporting] = useState(false);
 
@@ -50,9 +51,8 @@ export default function PhotoFeed({ photos, onDelete, onUpdatePhoto }: PhotoFeed
 
   const toggleLike = async (photoId: string) => {
     console.log(`[PhotoFeed] toggleLike called for photo: ${photoId}`);
-    const currentUser = localStorage.getItem('photoPartyUser');
     if (!currentUser) {
-      console.warn('[PhotoFeed] No user found in localStorage');
+      console.warn('[PhotoFeed] No user found');
       return;
     }
 
@@ -218,7 +218,7 @@ export default function PhotoFeed({ photos, onDelete, onUpdatePhoto }: PhotoFeed
                 <div className="flex items-center gap-4 mb-3">
                   <button
                     onClick={() => toggleLike(photo.id)}
-                    className={`flex items-center gap-1.5 transition-all duration-200 ${photo.likedBy?.includes(localStorage.getItem('photoPartyUser') || '')
+                    className={`flex items-center gap-1.5 transition-all duration-200 ${photo.likedBy?.includes(currentUser)
                       ? 'text-red-500 scale-110'
                       : 'text-gray-400 hover:text-red-400 hover:scale-110'
                       }`}
@@ -226,7 +226,7 @@ export default function PhotoFeed({ photos, onDelete, onUpdatePhoto }: PhotoFeed
                   >
                     <Heart
                       size={24}
-                      fill={photo.likedBy?.includes(localStorage.getItem('photoPartyUser') || '') ? 'currentColor' : 'none'}
+                      fill={photo.likedBy?.includes(currentUser) ? 'currentColor' : 'none'}
                       className="transition-all"
                     />
                     {photo.likesCount !== undefined && photo.likesCount > 0 && (
@@ -254,14 +254,16 @@ export default function PhotoFeed({ photos, onDelete, onUpdatePhoto }: PhotoFeed
 
                   <div className="flex-1" />
 
-                  <button
-                    onClick={() => onDelete(photo.id)}
-                    className="text-gray-400 hover:text-red-400 transition-all duration-200 hover:scale-110"
-                    title="Eliminar"
-                    aria-label="Eliminar foto"
-                  >
-                    <Trash2 size={22} />
-                  </button>
+                  {photo.userName === currentUser && (
+                    <button
+                      onClick={() => onDelete(photo.id)}
+                      className="text-gray-400 hover:text-red-400 transition-all duration-200 hover:scale-110"
+                      title="Eliminar"
+                      aria-label="Eliminar foto"
+                    >
+                      <Trash2 size={22} />
+                    </button>
+                  )}
                 </div>
 
                 {/* Título si existe */}

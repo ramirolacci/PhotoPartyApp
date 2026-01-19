@@ -252,6 +252,7 @@ function App() {
           onUpdatePhoto={(updatedPhoto) => {
             setPhotos(prev => prev.map(p => p.id === updatedPhoto.id ? updatedPhoto : p));
           }}
+          currentUser={user || ''}
         />
       </main>
 
