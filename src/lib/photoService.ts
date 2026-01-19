@@ -2,19 +2,34 @@ import { supabase } from './supabaseClient';
 import type { Photo } from '../types/Photo';
 import { base64ToBlob } from './imageOptimization';
 
-
+function logToConsole(msg: string, isError = false) {
+  const consoleEl = document.getElementById('debug-console');
+  if (consoleEl) {
+    const div = document.createElement('div');
+    div.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+    if (isError) div.style.color = '#ff6b6b';
+    consoleEl.appendChild(div);
+    consoleEl.scrollTop = consoleEl.scrollHeight;
+  }
+  if (isError) console.error(msg);
+  else console.log(msg);
+}
 
 export async function savePhoto(
   imageBase64: string,
   userName: string,
   title?: string
 ): Promise<Photo | null> {
+  logToConsole(`Starting savePhoto for user: ${userName}`);
   try {
     // 1. Convert base64 to blob
+    logToConsole('1. Converting base64 to blob...');
     const blob = base64ToBlob(imageBase64);
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
+    logToConsole(`   Blob size: ${blob.size} bytes. Filename: ${fileName}`);
 
     // 2. Upload to Supabase Storage
+    logToConsole('2. Uploading to Supabase Storage...');
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('photos')
       .upload(fileName, blob, {
@@ -24,17 +39,21 @@ export async function savePhoto(
       });
 
     if (uploadError) {
-      console.error('Error uploading photo:', uploadError);
+      logToConsole(`❌ Error uploading photo: ${uploadError.message}`, true);
       // Si el bucket no existe o falla config, no seguimos
       throw uploadError;
     }
+    logToConsole('✅ Upload success.');
 
     // 3. Get Public URL
+    logToConsole('3. Getting Public URL...');
     const { data: { publicUrl } } = supabase.storage
       .from('photos')
       .getPublicUrl(fileName);
+    logToConsole(`   URL: ${publicUrl}`);
 
     // 4. Save metadata to Database
+    logToConsole('4. Saving metadata to Database...');
     const { data: insertedPhoto, error: insertError } = await supabase
       .from('photos')
       .insert({
@@ -46,11 +65,13 @@ export async function savePhoto(
       .single();
 
     if (insertError) {
-      console.error('Error saving photo metadata:', insertError);
+      logToConsole(`❌ Error INSERT DB: ${insertError.message} - Code: ${insertError.code}`, true);
       // Optional: Cleanup uploaded file if metadata save fails
       // await supabase.storage.from('photos').remove([fileName]); 
       throw insertError;
     }
+
+    logToConsole(`✅ Database Insert Success. ID: ${insertedPhoto.id}`);
 
     // 5. Return mapped object
     return {
@@ -63,8 +84,7 @@ export async function savePhoto(
 
   } catch (err) {
     console.error('Error in savePhoto:', err);
-    // Mantenemos el alert silencioso en producción, o lo dejamos para feedback crítico
-    // alert(`Error detallado al guardar: ${err instanceof Error ? err.message : JSON.stringify(err)}`);
+    alert(`Error detallado al guardar: ${err instanceof Error ? err.message : JSON.stringify(err)}`);
     return null;
   }
 }

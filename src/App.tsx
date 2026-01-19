@@ -179,9 +179,9 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="h-[100dvh] flex flex-col overflow-hidden bg-black text-white">
       {/* Header con glassmorphism */}
-      <header className="glass-effect-dark sticky top-0 z-30 border-b border-white/5 slide-in-from-top">
+      <header className="glass-effect-dark sticky top-0 z-30 border-b border-white/5 slide-in-from-top shrink-0">
         <div className="max-w-2xl mx-auto px-4 py-4 flex justify-between items-center gap-4">
           <div className="flex items-center gap-3">
             <div className="relative">
@@ -220,7 +220,7 @@ function App() {
       </header>
 
       {/* Feed */}
-      <main ref={feedContainerRef} className="flex-1 flex flex-col overflow-hidden">
+      <main ref={feedContainerRef} className="flex-1 flex flex-col overflow-y-auto scroll-smooth">
         <PhotoFeed photos={photos} onDelete={handleDelete} />
       </main>
 
@@ -250,7 +250,10 @@ function App() {
         </div>
       )}
 
-
+      {/* Debug Error Display */}
+      <div id="debug-console" className="hidden fixed top-20 left-0 right-0 bg-black/80 text-green-400 p-2 font-mono text-[10px] z-[100] h-32 overflow-auto border-b-2 border-red-500 pointer-events-none opacity-80">
+        <div className="border-b border-gray-700 mb-1 pb-1 font-bold text-yellow-500">DEBUG LOGS (Visible at top)</div>
+      </div>
 
       {/* Cámara */}
       {showCamera && (

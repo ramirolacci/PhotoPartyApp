@@ -133,7 +133,8 @@ export default function PhotoFeed({ photos, onDelete }: PhotoFeedProps) {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div className="w-full">
+      {/* Botones de acción vaciado */}
       {/* Botones de acción */}
       {photos.length > 1 && (
         <div className="sticky top-0 z-20 glass-effect-dark border-b border-white/5 px-4 py-3 flex gap-3 slide-in-from-top">
