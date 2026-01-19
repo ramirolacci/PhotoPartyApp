@@ -27,7 +27,7 @@ export default function Login({ onLogin }: LoginProps) {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-black">
+        <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
             {/* Background 3D */}
             <SmokeBackground />
 

@@ -190,9 +190,6 @@ export default function PhotoFeed({ photos, onDelete, onUpdatePhoto }: PhotoFeed
               {/* Header de la foto */}
               <div className="px-3 py-2 md:px-4 md:py-3 flex items-center justify-between border-b border-white/5">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center font-bold text-white shadow-lg">
-                    📸
-                  </div>
                   <div>
                     <p className="text-white font-semibold text-sm">{photo.userName || 'PhotoParty'}</p>
                     <p className="text-gray-400 text-xs">{formatDateTime(photo.createdAt)}</p>
