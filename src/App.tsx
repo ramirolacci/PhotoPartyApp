@@ -75,21 +75,22 @@ function App() {
         (payload: any) => {
           const newPhoto = payload.new;
 
-          // Evitar duplicados si el usuario actual fue quien subió la foto
-          // (ya se manejó con la actualización optimista)
-          if (newPhoto.user_name === user) return;
+          // Verificar si ya existe (para evitar duplicados por actualización optimista)
+          setPhotos((prev) => {
+            const exists = prev.some(p => p.id === newPhoto.id);
+            if (exists) return prev;
 
-          const photoToAdd: Photo = {
-            id: newPhoto.id,
-            imageUrl: newPhoto.image_url,
-            userName: newPhoto.user_name,
-            title: newPhoto.title || undefined,
-            createdAt: new Date(newPhoto.created_at),
-            likesCount: newPhoto.likes_count || 0,
-            likedBy: newPhoto.liked_by || [],
-          };
-
-          setPhotos((prev) => [photoToAdd, ...prev]);
+            const photoToAdd: Photo = {
+              id: newPhoto.id,
+              imageUrl: newPhoto.image_url,
+              userName: newPhoto.user_name,
+              title: newPhoto.title || undefined,
+              createdAt: new Date(newPhoto.created_at),
+              likesCount: newPhoto.likes_count || 0,
+              likedBy: newPhoto.liked_by || [],
+            };
+            return [photoToAdd, ...prev];
+          });
         }
       )
       .on(
@@ -115,7 +116,21 @@ function App() {
           );
         }
       )
-      .subscribe();
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'photos',
+        },
+        (payload: any) => {
+          const deletedId = payload.old.id;
+          setPhotos((prev) => prev.filter((photo) => photo.id !== deletedId));
+        }
+      )
+      .subscribe((status) => {
+        console.log('Supabase Realtime Status:', status);
+      });
 
     return () => {
       supabase.removeChannel(channel);
