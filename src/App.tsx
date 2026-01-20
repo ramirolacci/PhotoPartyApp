@@ -186,7 +186,7 @@ function App() {
         setIsSaving(false);
         setTimeout(() => setShowSaveSuccess(false), 2000);
       });
-  }, []);
+  }, [user]);
 
   const handleDelete = useCallback(async (id: string) => {
     const success = await deletePhoto(id);

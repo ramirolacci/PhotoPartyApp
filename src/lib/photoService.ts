@@ -1,6 +1,6 @@
 import { supabase } from './supabaseClient';
 import type { Photo } from '../types/Photo';
-import { base64ToBlob } from './imageOptimization';
+import { base64ToBlob, compressImage } from './imageOptimization';
 
 function logToConsole(msg: string, isError = false) {
   const consoleEl = document.getElementById('debug-console');
@@ -22,11 +22,14 @@ export async function savePhoto(
 ): Promise<Photo | null> {
   logToConsole(`Starting savePhoto for user: ${userName}`);
   try {
-    // 1. Convert base64 to blob
-    logToConsole('1. Converting base64 to blob...');
-    const blob = base64ToBlob(imageBase64);
+    // 1. Convert base64 to blob and COMPRESS
+    logToConsole('1. Converting base64 to blob and compressing...');
+    const originalBlob = base64ToBlob(imageBase64);
+    const blob = await compressImage(originalBlob);
+
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
-    logToConsole(`   Blob size: ${blob.size} bytes. Filename: ${fileName}`);
+    logToConsole(`   Original size: ${originalBlob.size} bytes. Compressed size: ${blob.size} bytes.`);
+    logToConsole(`   Filename: ${fileName}`);
 
     // 2. Upload to Supabase Storage
     logToConsole('2. Uploading to Supabase Storage...');
