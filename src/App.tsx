@@ -63,8 +63,9 @@ function App() {
     loadPhotos();
 
     // Suscripción a cambios en tiempo real
+    const channelName = `photos-realtime-${Math.random().toString(36).substring(7)}`;
     const channel = supabase
-      .channel('schema-db-changes')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -73,12 +74,15 @@ function App() {
           table: 'photos',
         },
         (payload: any) => {
+          console.log('[Realtime] 🆕 INSERT payload:', payload);
           const newPhoto = payload.new;
 
-          // Verificar si ya existe (para evitar duplicados por actualización optimista)
           setPhotos((prev) => {
             const exists = prev.some(p => p.id === newPhoto.id);
-            if (exists) return prev;
+            if (exists) {
+              console.log('[Realtime] Photo already exists in state, ignoring.');
+              return prev;
+            }
 
             const photoToAdd: Photo = {
               id: newPhoto.id,
@@ -89,6 +93,7 @@ function App() {
               likesCount: newPhoto.likes_count || 0,
               likedBy: newPhoto.liked_by || [],
             };
+            console.log('[Realtime] Adding to state:', photoToAdd.id);
             return [photoToAdd, ...prev];
           });
         }
@@ -101,6 +106,7 @@ function App() {
           table: 'photos',
         },
         (payload: any) => {
+          console.log('[Realtime] 🔄 UPDATE payload:', payload);
           const updatedPhoto = payload.new;
           setPhotos((prev) =>
             prev.map((photo) =>
@@ -124,12 +130,14 @@ function App() {
           table: 'photos',
         },
         (payload: any) => {
+          console.log('[Realtime] 🗑️ DELETE payload:', payload);
           const deletedId = payload.old.id;
           setPhotos((prev) => prev.filter((photo) => photo.id !== deletedId));
         }
       )
-      .subscribe((status) => {
-        console.log('Supabase Realtime Status:', status);
+      .subscribe((status, err) => {
+        console.log(`[Realtime] Channel [${channelName}] status:`, status);
+        if (err) console.error('[Realtime] Error:', err);
       });
 
     return () => {

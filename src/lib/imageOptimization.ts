@@ -17,11 +17,19 @@ export async function compressImage(
     reader.onload = (event) => {
       const img = new Image();
       img.onerror = (error) => {
-        console.error('Image load error:', error);
-        console.error('Image src length:', (event.target?.result as string)?.length);
-        // En caso de error, devolver el blob original
+        console.error('Image load error in compressImage:', error);
+        console.error('Blob type:', blob.type, 'Size:', blob.size);
+        // Intentar recuperar si es un problema de carga
         resolve(blob);
       };
+
+      const dataUrl = event.target?.result as string;
+      if (!dataUrl || dataUrl.length < 100) {
+        console.error('Invalid Data URL generated in compressImage');
+        resolve(blob);
+        return;
+      }
+      img.src = dataUrl;
       img.onload = () => {
         try {
           const canvas = document.createElement('canvas');
