@@ -24,6 +24,10 @@ export default function PhotoFeed({ photos, onDelete, onUpdatePhoto, currentUser
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
   const [isClosing, setIsClosing] = useState(false);
+  const [isFirstOpen, setIsFirstOpen] = useState(true);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchCurrentX, setTouchCurrentX] = useState<number>(0);
+  const [isDragging, setIsDragging] = useState(false);
 
   const formatDateTime = (date: Date) => {
     const now = new Date();
@@ -156,8 +160,47 @@ export default function PhotoFeed({ photos, onDelete, onUpdatePhoto, currentUser
     setTimeout(() => {
       setSelectedPhoto(null);
       setIsClosing(false);
+      setIsFirstOpen(true);
+      setTouchStartX(null);
+      setTouchCurrentX(0);
     }, 300);
   };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.targetTouches[0].clientX);
+    setTouchCurrentX(e.targetTouches[0].clientX);
+    setIsFirstOpen(false);
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartX !== null) {
+      setTouchCurrentX(e.targetTouches[0].clientX);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartX === null || !selectedPhoto) return;
+
+    const deltaX = touchCurrentX - touchStartX;
+    const threshold = window.innerWidth * 0.2; // 20% del ancho para cambiar
+
+    if (Math.abs(deltaX) > threshold) {
+      const currentIndex = photos.findIndex(p => p.id === selectedPhoto.id);
+      if (deltaX > 0 && currentIndex > 0) {
+        setSelectedPhoto(photos[currentIndex - 1]);
+      } else if (deltaX < 0 && currentIndex < photos.length - 1) {
+        setSelectedPhoto(photos[currentIndex + 1]);
+      }
+    }
+
+    setTouchStartX(null);
+    setTouchCurrentX(0);
+    setIsDragging(false);
+  };
+
+  const swipeOffset = touchStartX !== null ? touchCurrentX - touchStartX : 0;
+  const currentPhotoIndex = selectedPhoto ? photos.findIndex(p => p.id === selectedPhoto.id) : -1;
 
   return (
     <div className="w-full">
@@ -192,7 +235,10 @@ export default function PhotoFeed({ photos, onDelete, onUpdatePhoto, currentUser
                       alt={photo.title || 'Foto'}
                       className="w-full h-auto object-contain max-h-[50vh] md:max-h-[70vh] cursor-zoom-in"
                       loading="lazy"
-                      onClick={() => setSelectedPhoto(photo)}
+                      onClick={() => {
+                        setIsFirstOpen(true);
+                        setSelectedPhoto(photo);
+                      }}
                       onError={() => handleImageError(photo.id)}
                     />
                   )}
@@ -283,7 +329,10 @@ export default function PhotoFeed({ photos, onDelete, onUpdatePhoto, currentUser
                     alt={photo.title || 'Foto'}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 cursor-pointer"
                     loading="lazy"
-                    onClick={() => setSelectedPhoto(photo)}
+                    onClick={() => {
+                      setIsFirstOpen(true);
+                      setSelectedPhoto(photo);
+                    }}
                     onError={() => handleImageError(photo.id)}
                   />
                 )}
@@ -306,6 +355,9 @@ export default function PhotoFeed({ photos, onDelete, onUpdatePhoto, currentUser
           className={`fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden backdrop-blur-lg bg-black/40 transition-all duration-300 ${isClosing ? 'fade-out' : 'animate-in fade-in duration-500'
             }`}
           onClick={handleClose}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
         >
           {/* Header del Modal */}
           <div className={`absolute top-0 left-0 right-0 p-4 flex justify-between items-center glass-effect-dark z-[110] transition-transform duration-300 ${isClosing ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'
@@ -325,15 +377,34 @@ export default function PhotoFeed({ photos, onDelete, onUpdatePhoto, currentUser
             </button>
           </div>
 
-          {/* Imagen Full Screen */}
-          <div className="relative w-full h-full flex items-center justify-center p-4 z-[105]">
-            <img
-              src={selectedPhoto.imageUrl}
-              alt={selectedPhoto.title || 'Foto Pantalla Completa'}
-              className={`max-w-full max-h-[80vh] object-contain shadow-2xl transition-all duration-300 ${isClosing ? 'zoom-out' : 'animate-in zoom-in-95 duration-500'
-                }`}
-              onClick={(e) => e.stopPropagation()}
-            />
+          {/* Contenedor del Carrusel (Slider) */}
+          <div
+            className="absolute inset-0 flex transition-transform duration-300 ease-out z-[105]"
+            style={{
+              transform: `translateX(calc(-${currentPhotoIndex * 100}% + ${swipeOffset}px))`,
+              transition: isDragging ? 'none' : 'transform 0.3s ease-out'
+            }}
+          >
+            {photos.map((photo, idx) => {
+              // Optimizacion: Solo renderizamos el actual y los vecinos para mejor performance
+              const isVisible = Math.abs(idx - currentPhotoIndex) <= 1;
+              if (!isVisible) return <div key={photo.id} className="min-w-full h-full" />;
+
+              return (
+                <div
+                  key={photo.id}
+                  className="min-w-full h-full flex items-center justify-center p-4 touch-none"
+                >
+                  <img
+                    src={photo.imageUrl}
+                    alt={photo.title || 'Foto'}
+                    className={`max-w-full max-h-[80vh] object-contain shadow-2xl transition-all duration-300 ${isClosing ? 'zoom-out' : (isFirstOpen && idx === currentPhotoIndex) ? 'animate-in zoom-in-95 duration-500' : ''
+                      }`}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+              );
+            })}
           </div>
 
           {/* Footer del Modal con Acciones */}
