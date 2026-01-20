@@ -13,6 +13,18 @@ export default function Camera({ onCapture, onClose }: CameraProps) {
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [showSuccess, setShowSuccess] = useState(false);
   const [showGrid, setShowGrid] = useState(true);
+  const [selectedFilter, setSelectedFilter] = useState('none');
+
+  const FILTERS = [
+    { id: 'none', name: 'Original', filter: 'none' },
+    { id: 'vivid', name: 'Vívido', filter: 'saturate(1.5) contrast(1.1)' },
+    { id: 'mono', name: 'B&N', filter: 'grayscale(1) contrast(1.2)' },
+    { id: 'sepia', name: 'Sepia', filter: 'sepia(0.8) contrast(1.1)' },
+    { id: 'warm', name: 'Cálido', filter: 'sepia(0.3) saturate(1.4) hue-rotate(-20deg)' },
+    { id: 'cool', name: 'Frío', filter: 'saturate(1.2) hue-rotate(20deg) brightness(1.1)' },
+    { id: 'noir', name: 'Noir', filter: 'grayscale(1) brightness(0.8) contrast(1.5)' },
+    { id: 'gold', name: 'Golden', filter: 'brightness(1.1) saturate(1.3) sepia(0.2)' },
+  ];
 
   const getOptimalConstraints = () => {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -34,13 +46,32 @@ export default function Camera({ onCapture, onClose }: CameraProps) {
   };
 
   const capture = useCallback(() => {
-    const imageSrc = webcamRef.current?.getScreenshot();
+    const rawImage = webcamRef.current?.getScreenshot();
 
-    if (imageSrc) {
+    if (rawImage) {
       setIsCapturing(true);
       setShowSuccess(true);
 
-      onCapture(imageSrc);
+      if (selectedFilter === 'none') {
+        onCapture(rawImage);
+      } else {
+        // Aplicar filtro mediante Canvas
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            const currentFilter = FILTERS.find(f => f.id === selectedFilter)?.filter || 'none';
+            ctx.filter = currentFilter;
+            ctx.drawImage(img, 0, 0);
+            const filteredImage = canvas.toDataURL('image/jpeg', 0.92);
+            onCapture(filteredImage);
+          }
+        };
+        img.src = rawImage;
+      }
 
       setTimeout(() => {
         setIsCapturing(false);
@@ -50,7 +81,7 @@ export default function Camera({ onCapture, onClose }: CameraProps) {
         setShowSuccess(false);
       }, 800);
     }
-  }, [onCapture]);
+  }, [onCapture, selectedFilter]);
 
   const toggleCamera = useCallback(() => {
     setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'));
@@ -88,7 +119,8 @@ export default function Camera({ onCapture, onClose }: CameraProps) {
           screenshotFormat="image/jpeg"
           screenshotQuality={0.92}
           videoConstraints={getOptimalConstraints()}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover transition-all duration-300"
+          style={{ filter: FILTERS.find(f => f.id === selectedFilter)?.filter || 'none' }}
           mirrored={facingMode === 'user'}
         />
 
@@ -125,6 +157,35 @@ export default function Camera({ onCapture, onClose }: CameraProps) {
           </div>
         )}
 
+      </div>
+
+      {/* Selector de Filtros */}
+      <div className="absolute bottom-32 left-0 right-0 z-10 px-4 slide-in-from-bottom flex justify-center">
+        <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar max-w-full px-10">
+          {FILTERS.map((filter) => (
+            <button
+              key={filter.id}
+              onClick={() => setSelectedFilter(filter.id)}
+              className="flex flex-col items-center gap-2 min-w-[60px] transition-all transform active:scale-95"
+            >
+              <div
+                className={`w-12 h-12 rounded-full border-2 transition-all ${selectedFilter === filter.id
+                    ? 'border-purple-500 scale-110 shadow-[0_0_15px_rgba(168,85,247,0.5)]'
+                    : 'border-white/30 hover:border-white/60'
+                  }`}
+                style={{
+                  filter: filter.filter,
+                  backgroundImage: `url(${webcamRef.current?.getScreenshot() || 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=100&h=100&fit=crop'})`,
+                  backgroundSize: 'cover'
+                }}
+              />
+              <span className={`text-[10px] font-bold uppercase tracking-wider ${selectedFilter === filter.id ? 'text-purple-400' : 'text-gray-400'
+                }`}>
+                {filter.name}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Controles Premium */}
