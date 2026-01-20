@@ -8,6 +8,7 @@ interface PhotoFeedProps {
   onDelete: (id: string) => void;
   onUpdatePhoto?: (updatedPhoto: Photo) => void;
   currentUser: string;
+  viewMode: 'feed' | 'grid';
 }
 
 const PlaceholderImage = () => (
@@ -19,7 +20,7 @@ const PlaceholderImage = () => (
   </div>
 );
 
-export default function PhotoFeed({ photos, onDelete, onUpdatePhoto, currentUser }: PhotoFeedProps) {
+export default function PhotoFeed({ photos, onDelete, onUpdatePhoto, currentUser, viewMode }: PhotoFeedProps) {
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
 
   const formatDateTime = (date: Date) => {
@@ -150,107 +151,147 @@ export default function PhotoFeed({ photos, onDelete, onUpdatePhoto, currentUser
 
   return (
     <div className="w-full">
-      {/* Feed estilo Instagram Premium */}
-      <div className="max-w-2xl mx-auto w-full pt-6 pb-6 px-4">
-
-        {photos.map((photo, index) => (
-          <div
-            key={photo.id}
-            className="mb-4 md:mb-6 animate-in slide-in-from-bottom-4"
-            style={{ animationDelay: `${index * 50}ms` }}
-          >
-            {/* Card con glassmorphism */}
-            <div className="glass-effect rounded-2xl overflow-hidden border border-white/10 shadow-2xl hover:shadow-purple-500/20 transition-all duration-300">
-              {/* Header de la foto */}
-              <div className="px-3 py-2 md:px-4 md:py-3 flex items-center justify-between border-b border-white/5">
-                <div className="flex items-center gap-3">
-                  <div>
-                    <p className="text-white font-semibold text-sm">{photo.userName || 'PhotoParty'}</p>
-                    <p className="text-gray-400 text-xs">{formatDateTime(photo.createdAt)}</p>
+      {viewMode === 'feed' ? (
+        /* Feed estilo Instagram Premium */
+        <div className="max-w-2xl mx-auto w-full pt-6 pb-6 px-4">
+          {photos.map((photo, index) => (
+            <div
+              key={photo.id}
+              className="mb-4 md:mb-6 animate-in slide-in-from-bottom-4"
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              {/* Card con glassmorphism */}
+              <div className="glass-effect rounded-2xl overflow-hidden border border-white/10 shadow-2xl hover:shadow-purple-500/20 transition-all duration-300">
+                {/* Header de la foto */}
+                <div className="px-3 py-2 md:px-4 md:py-3 flex items-center justify-between border-b border-white/5">
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <p className="text-white font-semibold text-sm">{photo.userName || 'PhotoParty'}</p>
+                      <p className="text-gray-400 text-xs">{formatDateTime(photo.createdAt)}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Imagen */}
-              <div className="relative w-full bg-black/50">
+                {/* Imagen */}
+                <div className="relative w-full bg-black/50">
+                  {imageErrors.has(photo.id) ? (
+                    <PlaceholderImage />
+                  ) : (
+                    <img
+                      src={photo.imageUrl}
+                      alt={photo.title || 'Foto'}
+                      className="w-full h-auto object-contain max-h-[50vh] md:max-h-[70vh]"
+                      loading="lazy"
+                      onError={() => handleImageError(photo.id)}
+                    />
+                  )}
+                </div>
+
+                {/* Controles */}
+                <div className="px-3 py-2 md:px-4 md:py-3">
+                  {/* Botones de acción principales */}
+                  <div className="flex items-center gap-4 mb-3">
+                    <button
+                      onClick={() => toggleLike(photo.id)}
+                      className={`flex items-center gap-1.5 transition-all duration-200 ${photo.likedBy?.includes(currentUser)
+                        ? 'text-red-500 scale-110'
+                        : 'text-gray-400 hover:text-red-400 hover:scale-110'
+                        }`}
+                      aria-label="Me gusta"
+                    >
+                      <Heart
+                        size={24}
+                        fill={photo.likedBy?.includes(currentUser) ? 'currentColor' : 'none'}
+                        className="transition-all"
+                      />
+                      {photo.likesCount !== undefined && photo.likesCount > 0 && (
+                        <span className="text-sm font-bold">{photo.likesCount}</span>
+                      )}
+                    </button>
+
+                    <button
+                      onClick={() => sharePhoto(photo)}
+                      className="text-gray-400 hover:text-blue-400 transition-all duration-200 hover:scale-110"
+                      title="Compartir"
+                      aria-label="Compartir foto"
+                    >
+                      <Share2 size={24} />
+                    </button>
+
+                    <button
+                      onClick={() => downloadPhoto(photo)}
+                      className="text-gray-400 hover:text-green-400 transition-all duration-200 hover:scale-110"
+                      title="Descargar"
+                      aria-label="Descargar foto"
+                    >
+                      <Download size={24} />
+                    </button>
+
+                    <div className="flex-1" />
+
+                    {photo.userName === currentUser && (
+                      <button
+                        onClick={() => onDelete(photo.id)}
+                        className="text-gray-400 hover:text-red-400 transition-all duration-200 hover:scale-110"
+                        title="Eliminar"
+                        aria-label="Eliminar foto"
+                      >
+                        <Trash2 size={22} />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Título si existe */}
+                  {photo.title && (
+                    <p className="text-white text-sm font-medium mb-2 break-words">
+                      <span className="font-bold">{photo.userName || 'PhotoParty'}</span> {photo.title}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        /* Album estilo Cuadrícula (Celular) */
+        <div className="max-w-4xl mx-auto w-full pt-4 pb-12 px-1">
+          <div className="grid grid-cols-3 gap-1 md:gap-2">
+            {photos.map((photo, index) => (
+              <div
+                key={photo.id}
+                className="relative aspect-square animate-in zoom-in duration-300 overflow-hidden group"
+                style={{ animationDelay: `${index * 30}ms` }}
+              >
                 {imageErrors.has(photo.id) ? (
-                  <PlaceholderImage />
+                  <div className="w-full h-full glass-effect flex items-center justify-center">
+                    <ImageIcon className="text-gray-600" size={24} />
+                  </div>
                 ) : (
                   <img
                     src={photo.imageUrl}
                     alt={photo.title || 'Foto'}
-                    className="w-full h-auto object-contain max-h-[50vh] md:max-h-[70vh]"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 cursor-pointer"
                     loading="lazy"
+                    onClick={() => {
+                      // Opcional: Podríamos abrir un modal de vista completa aquí, 
+                      // pero por ahora solo mostramos el album
+                    }}
                     onError={() => handleImageError(photo.id)}
                   />
                 )}
-              </div>
 
-              {/* Controles */}
-              <div className="px-3 py-2 md:px-4 md:py-3">
-                {/* Botones de acción principales */}
-                <div className="flex items-center gap-4 mb-3">
-                  <button
-                    onClick={() => toggleLike(photo.id)}
-                    className={`flex items-center gap-1.5 transition-all duration-200 ${photo.likedBy?.includes(currentUser)
-                      ? 'text-red-500 scale-110'
-                      : 'text-gray-400 hover:text-red-400 hover:scale-110'
-                      }`}
-                    aria-label="Me gusta"
-                  >
-                    <Heart
-                      size={24}
-                      fill={photo.likedBy?.includes(currentUser) ? 'currentColor' : 'none'}
-                      className="transition-all"
-                    />
-                    {photo.likesCount !== undefined && photo.likesCount > 0 && (
-                      <span className="text-sm font-bold">{photo.likesCount}</span>
-                    )}
-                  </button>
-
-                  <button
-                    onClick={() => sharePhoto(photo)}
-                    className="text-gray-400 hover:text-blue-400 transition-all duration-200 hover:scale-110"
-                    title="Compartir"
-                    aria-label="Compartir foto"
-                  >
-                    <Share2 size={24} />
-                  </button>
-
-                  <button
-                    onClick={() => downloadPhoto(photo)}
-                    className="text-gray-400 hover:text-green-400 transition-all duration-200 hover:scale-110"
-                    title="Descargar"
-                    aria-label="Descargar foto"
-                  >
-                    <Download size={24} />
-                  </button>
-
-                  <div className="flex-1" />
-
-                  {photo.userName === currentUser && (
-                    <button
-                      onClick={() => onDelete(photo.id)}
-                      className="text-gray-400 hover:text-red-400 transition-all duration-200 hover:scale-110"
-                      title="Eliminar"
-                      aria-label="Eliminar foto"
-                    >
-                      <Trash2 size={22} />
-                    </button>
-                  )}
-                </div>
-
-                {/* Título si existe */}
-                {photo.title && (
-                  <p className="text-white text-sm font-medium mb-2 break-words">
-                    <span className="font-bold">{photo.userName || 'PhotoParty'}</span> {photo.title}
-                  </p>
+                {/* Overlay de likes simple en grid */}
+                {(photo.likesCount || 0) > 0 && (
+                  <div className="absolute bottom-1 right-1 flex items-center gap-1 bg-black/40 backdrop-blur-md px-1.5 py-0.5 rounded-full text-[10px] text-white">
+                    <Heart size={10} fill="red" className="text-red-500" />
+                    <span>{photo.likesCount}</span>
+                  </div>
                 )}
               </div>
-            </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

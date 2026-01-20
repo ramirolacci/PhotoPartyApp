@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Camera as CameraIcon, Loader, CheckCircle, Sparkles, MoreVertical, Package, Loader2 } from 'lucide-react';
+import { Camera as CameraIcon, Loader, CheckCircle, Sparkles, MoreVertical, Package, Loader2, LayoutGrid, List } from 'lucide-react';
 import JSZip from 'jszip';
 import Camera from './components/Camera';
 import PhotoFeed from './components/PhotoFeed';
@@ -20,6 +20,7 @@ function App() {
   const [showPreview, setShowPreview] = useState(false);
   const [isHidingPreview, setIsHidingPreview] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'feed' | 'grid'>('feed');
   const feedContainerRef = useRef<HTMLDivElement>(null);
   const previousPhotosCountRef = useRef(0);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -321,6 +322,16 @@ function App() {
                 <div className="absolute right-0 mt-2 w-48 glass-effect-dark rounded-xl border border-white/10 shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
                   <div className="py-1">
                     <button
+                      onClick={() => {
+                        setViewMode(prev => prev === 'feed' ? 'grid' : 'feed');
+                        setShowMenu(false);
+                      }}
+                      className="w-full px-4 py-3 flex items-center gap-3 text-sm font-medium text-gray-200 hover:bg-white/10 hover:text-white transition-colors"
+                    >
+                      {viewMode === 'feed' ? <LayoutGrid size={18} /> : <List size={18} />}
+                      Vista: {viewMode === 'feed' ? 'Álbum' : 'Feed'}
+                    </button>
+                    <button
                       onClick={exportAllPhotos}
                       className="w-full px-4 py-3 flex items-center gap-3 text-sm font-medium text-gray-200 hover:bg-white/10 hover:text-white transition-colors"
                     >
@@ -345,6 +356,7 @@ function App() {
             setPhotos(prev => prev.map(p => p.id === updatedPhoto.id ? updatedPhoto : p));
           }}
           currentUser={user || ''}
+          viewMode={viewMode}
         />
 
         {/* Footer */}
@@ -404,8 +416,8 @@ function App() {
       {/* Preview de foto capturada */}
       {showPreview && previewImage && (
         <div className={`fixed top-20 right-4 z-[100] ${isHidingPreview
-            ? 'fade-out slide-out-to-right-4'
-            : 'animate-in slide-in-from-right-4'
+          ? 'fade-out slide-out-to-right-4'
+          : 'animate-in slide-in-from-right-4'
           }`}>
           <div className="glass-effect p-1 rounded-xl shadow-2xl border border-white/20">
             <div className="relative w-32 h-44 rounded-lg overflow-hidden">
