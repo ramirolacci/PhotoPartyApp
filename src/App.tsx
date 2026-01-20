@@ -17,9 +17,12 @@ function App() {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingPhotos, setIsLoadingPhotos] = useState(true);
   const [showSaveSuccess, setShowSaveSuccess] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const feedContainerRef = useRef<HTMLDivElement>(null);
   const previousPhotosCountRef = useRef(0);
   const menuRef = useRef<HTMLDivElement>(null);
+  const previewTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Cerrar menú al hacer click afuera
   useEffect(() => {
@@ -162,6 +165,14 @@ function App() {
     setPhotos((prev) => [tempPhoto, ...prev]);
     setShowSaveSuccess(true);
     setIsSaving(true);
+
+    // Preview Logic
+    setPreviewImage(imageSrc);
+    setShowPreview(true);
+    if (previewTimerRef.current) clearTimeout(previewTimerRef.current);
+    previewTimerRef.current = setTimeout(() => {
+      setShowPreview(false);
+    }, 3000);
 
     if (consoleEl) {
       const div = document.createElement('div');
@@ -380,6 +391,25 @@ function App() {
           onCapture={handleCapture}
           onClose={() => setShowCamera(false)}
         />
+      )}
+
+      {/* Preview de foto capturada */}
+      {showPreview && previewImage && (
+        <div className="fixed top-20 right-4 z-[100] animate-in slide-in-from-right-4">
+          <div className="glass-effect p-1 rounded-xl shadow-2xl border border-white/20">
+            <div className="relative w-32 h-44 rounded-lg overflow-hidden">
+              <img
+                src={previewImage}
+                alt="Preview"
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+              <div className="absolute bottom-1 right-2">
+                <CheckCircle className="text-green-400" size={16} />
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
