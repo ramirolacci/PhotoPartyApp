@@ -12,7 +12,6 @@ export default function Camera({ onCapture, onClose }: CameraProps) {
   const [isCapturing, setIsCapturing] = useState(false);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [showSuccess, setShowSuccess] = useState(false);
-  const [captureCount, setCaptureCount] = useState(0);
 
   const getOptimalConstraints = () => {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -37,7 +36,6 @@ export default function Camera({ onCapture, onClose }: CameraProps) {
     const imageSrc = webcamRef.current?.getScreenshot();
 
     if (imageSrc) {
-      setCaptureCount(prev => prev + 1);
       setIsCapturing(true);
       setShowSuccess(true);
 
@@ -69,11 +67,6 @@ export default function Camera({ onCapture, onClose }: CameraProps) {
             </div>
             <div>
               <h2 className="text-white text-lg font-bold">Cámara</h2>
-              {captureCount > 0 && (
-                <p className="text-xs text-gray-400">
-                  {captureCount} {captureCount === 1 ? 'foto capturada' : 'fotos capturadas'}
-                </p>
-              )}
             </div>
           </div>
           <button
@@ -125,12 +118,6 @@ export default function Camera({ onCapture, onClose }: CameraProps) {
           </div>
         )}
 
-        {/* Contador de fotos flotante */}
-        {captureCount > 0 && (
-          <div className="absolute top-4 right-4 glass-effect px-4 py-2 rounded-full">
-            <span className="text-white font-bold text-sm">{captureCount}</span>
-          </div>
-        )}
       </div>
 
       {/* Controles Premium */}
