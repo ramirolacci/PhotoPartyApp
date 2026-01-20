@@ -1,6 +1,6 @@
 import { useRef, useCallback, useState } from 'react';
 import Webcam from 'react-webcam';
-import { X, RotateCcw, Zap, Circle } from 'lucide-react';
+import { X, RotateCcw, Zap, Circle, Grid3X3 } from 'lucide-react';
 
 interface CameraProps {
   onCapture: (imageSrc: string) => void;
@@ -12,6 +12,7 @@ export default function Camera({ onCapture, onClose }: CameraProps) {
   const [isCapturing, setIsCapturing] = useState(false);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showGrid, setShowGrid] = useState(true);
 
   const getOptimalConstraints = () => {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -91,15 +92,21 @@ export default function Camera({ onCapture, onClose }: CameraProps) {
           mirrored={facingMode === 'user'}
         />
 
-        {/* Overlay con grid */}
-        <div className="absolute inset-0 pointer-events-none">
-          {/* Grid de composición */}
-          <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 opacity-20">
-            {[...Array(9)].map((_, i) => (
-              <div key={i} className="border border-white/30" />
-            ))}
+        {/* Overlay con grid profesional (Regla de tercios) */}
+        {showGrid && (
+          <div className="absolute inset-0 pointer-events-none animate-in fade-in duration-500">
+            {/* Líneas verticales */}
+            <div className="absolute inset-0 flex justify-evenly">
+              <div className="w-[0.5px] h-full bg-white/30" />
+              <div className="w-[0.5px] h-full bg-white/30" />
+            </div>
+            {/* Líneas horizontales */}
+            <div className="absolute inset-0 flex flex-col justify-evenly">
+              <div className="h-[0.5px] w-full bg-white/30" />
+              <div className="h-[0.5px] w-full bg-white/30" />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Flash effect */}
         {isCapturing && (
@@ -149,8 +156,16 @@ export default function Camera({ onCapture, onClose }: CameraProps) {
             </div>
           </button>
 
-          {/* Espacio para simetría */}
-          <div className="w-16" />
+          {/* Botón Grid */}
+          <button
+            onClick={() => setShowGrid(!showGrid)}
+            className={`btn-secondary p-4 rounded-full hover:scale-110 transition-all duration-200 shadow-lg ${showGrid ? 'text-purple-400 bg-white/10' : 'text-white'
+              }`}
+            title="Cuadrícula"
+            aria-label="Toggle cuadrícula"
+          >
+            <Grid3X3 size={24} />
+          </button>
         </div>
 
         {/* Indicador de modo */}
