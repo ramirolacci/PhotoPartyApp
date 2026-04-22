@@ -1,7 +1,6 @@
 # 📸 PhotoParty
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/lucide-react/lucide/main/icons/sparkles.svg" width="80" height="80" alt="PhotoParty Logo" />
   <h3>Captura y comparte la magia de cada momento</h3>
   <p>Una plataforma moderna y elegante para eventos sociales, diseñada para coleccionar recuerdos en tiempo real.</p>
 </div>
