@@ -49,22 +49,26 @@ Aquí puedes ver la elegancia y fluidez de la aplicación en acción:
     <tr>
       <td align="center" style="border: none;">
         <p><b>Pantalla de Inicio</b></p>
-        <img src="https://via.placeholder.com/400x800/2D1B69/FFFFFF?text=Login+Screen" width="200" alt="Login Preview" style="border-radius: 12px; border: 1px solid #ffffff20;" />
+        <img src="screenshots/login-screen.png" width="380" alt="Login Preview" style="border-radius: 12px; border: 1px solid #ffffff20; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
       </td>
       <td align="center" style="border: none;">
-        <p><b>Galería en Vivo</b></p>
-        <img src="https://via.placeholder.com/400x800/2D1B69/FFFFFF?text=Photo+Feed" width="200" alt="Feed Preview" style="border-radius: 12px; border: 1px solid #ffffff20;" />
+        <p><b>Interfaz de Cámara</b></p>
+        <img src="screenshots/camera-interface.png" width="380" alt="Camera Preview" style="border-radius: 12px; border: 1px solid #ffffff20; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
+      </td>
+    </tr>
+    <tr>
+      <td align="center" style="border: none;">
+        <p><b>Feed de Fotos</b></p>
+        <img src="screenshots/photo-feed.png" width="380" alt="Feed Preview" style="border-radius: 12px; border: 1px solid #ffffff20; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
       </td>
       <td align="center" style="border: none;">
-        <p><b>Modo Cámara</b></p>
-        <img src="https://via.placeholder.com/400x800/2D1B69/FFFFFF?text=Camera+Interface" width="200" alt="Camera Preview" style="border-radius: 12px; border: 1px solid #ffffff20;" />
+        <p><b>Vista de Álbum (Grid)</b></p>
+        <img src="screenshots/grid-view.png" width="380" alt="Grid Preview" style="border-radius: 12px; border: 1px solid #ffffff20; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
       </td>
     </tr>
   </table>
 </div>
 
-> [!TIP]
-> Puedes reemplazar estas imágenes con capturas de pantalla reales del proyecto para un impacto visual máximo.
 
 ---
 
