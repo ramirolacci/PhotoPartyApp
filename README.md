@@ -1,41 +1,59 @@
-# 📸 PhotoParty
-
 <div align="center">
-  <h3>Captura y comparte la magia de cada momento</h3>
-  <p>Una plataforma moderna y elegante para eventos sociales, diseñada para coleccionar recuerdos en tiempo real.</p>
+
+  <h1>📸 PhotoParty</h1>
+
+  <p><b>Captura, sincroniza y revive la magia de cada momento en tiempo real.</b></p>
+
+  <p>Una plataforma web progresiva y elegante diseñada para eventos sociales con interfaz Glassmorphic premium.</p>
+
+  <p>
+    <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React" /></a>
+    <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" /></a>
+    <a href="https://vitejs.dev/"><img src="https://img.shields.io/badge/Vite-5.0-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" /></a>
+    <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/Tailwind_CSS-3.4-38BDF8?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" /></a>
+    <a href="https://supabase.com/"><img src="https://img.shields.io/badge/Supabase-Realtime-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" /></a>
+  </p>
+
 </div>
 
 ---
 
 ## ✨ Sobre el Proyecto
 
-**PhotoParty** es una aplicación web progresiva diseñada para transformar la experiencia de capturar fotos en eventos. Los invitados pueden tomar fotografías instantáneas desde sus dispositivos, las cuales se sincronizan automáticamente en una galería compartida en tiempo real. 
+**PhotoParty** transforma la manera en que los invitados interactúan y comparten recuerdos durante cualquier evento social. Olvídate de los álbumes dispersos o las fotos perdidas en chats de mensajería; PhotoParty permite a los asistentes tomar fotos al instante desde la cámara de sus dispositivos y sincronizarlas en vivo en una galería interactiva accesible para todos.
 
-Con una interfaz inspirada en el **Glassmorphism**, la aplicación ofrece una experiencia visual premium, fluida y altamente interactiva.
+Diseñado bajo la estética **Glassmorphism**, el proyecto combina dinamismo, fluidez y efectos de transparencia sofisticados para ofrecer una experiencia estética y funcional de nivel profesional.
 
 ---
 
-## 🚀 Características Principales
+## ⚡ Características Destacadas
 
-- 📸 **Captura Instantánea**: Integración directa con la cámara del dispositivo para una experiencia rápida y sencilla.
-- 🔄 **Tiempo Real**: Galería dinámica que se actualiza automáticamente mediante suscripciones de base de datos.
-- 💎 **Diseño Premium**: Interfaz moderna con efectos de desenfoque, degradados vibrantes y animaciones fluidas.
-- 📥 **Exportación Masiva**: Herramienta integrada para descargar todas las fotografías del evento en un archivo comprimido (ZIP).
-- ❤️ **Interacción Social**: Sistema de "likes" para destacar los mejores momentos de la fiesta.
-- 📱 **Totalmente Responsive**: Optimizada para dispositivos móviles, tablets y escritorio.
+| Función | Descripción |
+| :--- | :--- |
+| 📸 **Captura Directa** | Integración nativa fluida con la cámara del dispositivo móvil o de escritorio. |
+| 🔄 **Sincronización Real-Time** | Actualización instantánea del feed general gracias al motor de suscripciones de Supabase. |
+| 💎 **Diseño Glassmorphic** | Estética moderna con efectos de desenfoque, gradientes vibrantes y animaciones sutiles. |
+| 📥 **Descarga Masiva en ZIP** | Herramienta integrada para exportar todas las fotografías del evento en alta calidad en un solo clic. |
+| ❤️ **Interacción Social** | Sistema interactivo de reacciones y likes para destacar las mejores capturas de la fiesta. |
+| 📱 **Experiencia Responsive** | Adaptabilidad perfecta garantizada para smartphones, tablets y pantallas de gran formato. |
 
 ---
 
 ## 🛠️ Stack Tecnológico
 
-El proyecto utiliza las tecnologías más modernas para garantizar rendimiento y escalabilidad:
+<div align="center">
 
-- **Frontend**: [React](https://reactjs.org/) + [TypeScript](https://www.typescriptlang.org/)
-- **Build Tool**: [Vite](https://vitejs.dev/)
-- **Estilos**: [Tailwind CSS](https://tailwindcss.com/)
-- **Base de Datos & Tiempo Real**: [Supabase](https://supabase.com/)
-- **Iconografía**: [Lucide React](https://lucide.dev/)
-- **Utilidades**: [JSZip](https://stuk.github.io/jszip/) para la exportación de archivos.
+| Tecnología | Rol en la Aplicación |
+| :--- | :--- |
+| **React 18** | Arquitectura de componentes UI declarativa y reactiva. |
+| **TypeScript** | Tipado estático robusto para un código mantenible y seguro. |
+| **Vite** | Bundling ultrarrápido y desarrollo frontend de alto rendimiento. |
+| **Tailwind CSS** | Sistema de diseño de utilidad y estilos glassmorphism a medida. |
+| **Supabase** | Base de datos PostgreSQL, almacenamiento de imágenes y suscripciones Realtime. |
+| **JSZip** | Compresión cliente para la descarga masiva de fotografías. |
+| **Lucide Icons** | Iconografía vectorizada moderna e intuitiva. |
+
+</div>
 
 ---
 
@@ -68,16 +86,15 @@ Aquí puedes ver la elegancia y fluidez de la aplicación en acción:
   </table>
 </div>
 
-
 ---
 
 ## 🤝 Créditos
 
-Desarrollado con ❤️ por **WaveFrame Studio**. 
+Desarrollado con ❤️ por **WaveFrame Studio**.  
 *Transformando ideas en experiencias digitales excepcionales.*
 
 ---
 
 <div align="center">
-  <p>© 2024 PhotoParty | Todos los derechos reservados.</p>
+  <sub>© 2024 PhotoParty | Todos los derechos reservados.</sub>
 </div>
